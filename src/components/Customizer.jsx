@@ -1,16 +1,16 @@
-import React, { useEffect, memo, useRef, useState } from "react";
 import { fabric } from "fabric";
+import FontPicker from "font-picker-react";
+import { useEffect, useRef, useState } from "react";
+import { CirclePicker } from "react-color";
+import { AiOutlineFontColors } from "react-icons/ai";
+import { BiAlignMiddle } from "react-icons/bi";
 import {
-  BsJustifyLeft,
   BsJustify,
+  BsJustifyLeft,
   BsJustifyRight,
   BsTrash,
 } from "react-icons/bs";
-import { BiAlignMiddle } from "react-icons/bi";
-import { AiOutlineFontColors } from "react-icons/ai";
-import FontPicker from "font-picker-react";
 import eventBus from "../lib/EventBus";
-import { CirclePicker } from "react-color";
 
 const WIDTH = 600;
 const HEIGHT = 600;
@@ -68,21 +68,6 @@ const Customizer = ({ isFront }) => {
         originY: "center",
       });
     });
-    canvas.renderAll();
-    // canvas.setBackgroundImage(
-    //   '/images/front.png',
-    //   canvas.renderAll.bind(canvas),
-    //   {
-    //     backgroundImageOpacity: 1,
-    //     backgroundImageStretch: false,
-    //     scaleX: 0.5,
-    //     scaleY: 0.5,
-    //     top: canvas.getCenter().top,
-    //     left: canvas.getCenter().left,
-    //     originX: 'center',
-    //     originY: 'center',
-    //   },
-    // )
     canvas.renderAll();
   };
 

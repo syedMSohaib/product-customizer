@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Customizer from "../components/Customizer";
 import { CirclePicker } from "react-color";
+import Customizer from "../components/Customizer";
 
 import eventBus from "../lib/EventBus";
 
