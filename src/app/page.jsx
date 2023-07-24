@@ -4,13 +4,14 @@ import { useState } from "react";
 import { CirclePicker } from "react-color";
 import Customizer from "../components/Customizer";
 
-import eventBus from "../lib/EventBus";
+// import eventBus from "../lib/EventBus";
+import { BiArrowBack } from "react-icons/bi";
 
 export default function Home() {
   const [isFront, setIsFront] = useState(true);
 
   const onAddTextClick = () => {
-    eventBus.dispatch("addTextBox", {});
+    // if (typeof window !== undefined) eventBus.dispatch("addTextBox", {});
   };
 
   const handleFileChange = (event) => {
@@ -18,7 +19,8 @@ export default function Home() {
     const reader = new FileReader();
     reader.onload = function () {
       const base64ImageData = reader.result;
-      eventBus.dispatch("addImage", { base64: base64ImageData });
+      // if (typeof window !== undefined)
+        // eventBus.dispatch("addImage", { base64: base64ImageData });
     };
 
     // Read the file as data URL (base64)
@@ -27,7 +29,28 @@ export default function Home() {
 
   return (
     <>
+    <div className="bg-white text-black grid grid-cols-[1.3fr_0.6fr] grid-rows-[0.2fr] grid-flow-row">
+        <div className="flex p-3 gap-6 border border-gray-300">
+          <span className="inline-flex justify-center items-center gap-2.5">
+            <BiArrowBack /> Back to Catalog
+          </span>
+          <div className="flex flex-col flex-1">
+            <p className="font-bold">Unisex Heavy Cotton Tee</p>
+            <p className="text-gray-400 font-extralight">Gildan - 5000 - Fulfilled by Print Geek</p>
+          </div>
+          <div className="flex">
+              <button className="min-w-[100px] p-2 bg-gray-500 text-white">Edit</button>
+              <button className="min-w-[100px] p-2 border border-gray-500">Preview</button>
+          </div>
+        </div>
+        <div className="flex p-3 items-center justify-between border border-l-0 border-gray-300">
+          <p className="font-medium">Cost: USD 10.63 - 11.76 </p>
+          <p className="text-green-500 font-light hover:underline cursor-pointer">Product Variants</p>
+        </div>
+      </div>
+      <Customizer isFront={isFront} />
       {/* component */}
+      { false && (
       <section className="body-font overflow-hidden bg-white text-gray-700">
         <div className="container mx-auto px-5 py-24">
           <div className="mx-auto flex flex-wrap lg:w-full">
@@ -46,7 +69,7 @@ export default function Home() {
                   Back
                 </button>
               </div>
-              <Customizer isFront={isFront} />
+              {/* <Customizer isFront={isFront} /> */}
               {/* <canvas ref={setCanvasElRef} /> */}
             </div>
             <div className="mt-6 w-full lg:mt-0 lg:w-1/2 lg:py-6 lg:pl-10">
@@ -111,7 +134,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </section> ) }
     </>
   );
 }

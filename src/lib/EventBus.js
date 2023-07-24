@@ -1,14 +1,20 @@
 const eventBus = {
   on(event, callback) {
-    document.addEventListener(event, (e) => callback(e.detail));
+    if (typeof window !== undefined)
+      document.addEventListener(event, (e) => callback(e.detail));
   },
   dispatch(event, data) {
-    document.dispatchEvent(new CustomEvent(event, {
-      detail: data
-    }));
+    if (typeof window !== undefined) {
+      document.dispatchEvent(new CustomEvent(event, {
+        detail: data
+      }));
+
+    }
   },
   remove(event, callback) {
-    document.removeEventListener(event, callback);
+    if (typeof window !== undefined) {
+      document.removeEventListener(event, callback);
+    }
   },
 };
 
