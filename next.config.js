@@ -1,21 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    experimental: {
-        serverComponentsExternalPackages: ['fabric'],
-    },
-    webpack: (config, {
-        buildId,
-        dev,
-        isServer,
-        defaultLoaders,
-        webpack
-    }) => {
-        config.externals.push({
-            'utf-8-validate': 'commonjs utf-8-validate',
-            'bufferutil': 'commonjs bufferutil',
-        })
-        return config
-    },
-}
+    reactStrictMode: true,
+};
 
-module.exports = nextConfig
+module.exports = {
+    ...nextConfig,
+    webpack: (config) => {
+        config.externals.push({
+            sharp: 'commonjs sharp',
+            canvas: 'commonjs canvas',
+            // bufferutil: "bufferutil",
+            // "utf-8-validate": "utf-8-validate",
+            // "supports-color": "supports-color"
+        });
+        return config;
+    }
+};
