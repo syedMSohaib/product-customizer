@@ -1,7 +1,7 @@
 "use client";
 
 import { fabric } from "fabric";
-// import FontPicker from "font-picker-react";
+import { v4 } from "uuid";
 import FontPicker from "react-fontpicker-ts";
 import { useEffect, useRef, useState } from "react";
 import { CirclePicker } from "react-color";
@@ -25,9 +25,10 @@ import {
 } from "react-icons/md";
 import { GoTypography } from "react-icons/go";
 import { SiShutterstock } from "react-icons/si";
-
-// import eventBus from "../lib/EventBus";
 import { Popover } from "react-tiny-popover";
+import { PrintInfo } from "./PrintInfo";
+import { DesignTabs } from "./DesignTabs";
+import { Toolbar } from "./Toolbar";
 
 const WIDTH = 900;
 const HEIGHT = 600;
@@ -49,6 +50,7 @@ const Customizer = ({ isFront, children = "" }) => {
 
   let boundary;
   let productSvg;
+  let boundingBoxGroup;
 
   const initFabric = () => {
     fabricRef.current = new fabric.Canvas(canvasRef.current);
@@ -60,10 +62,10 @@ const Customizer = ({ isFront, children = "" }) => {
     const canvas = fabricRef.current;
     boundary = new fabric.Rect({
       name: "boundary",
-      top: 200,
-      left: 365,
-      width: 172,
-      height: 230,
+      top: 145,
+      left: 338,
+      width: 224,
+      height: 295,
       fill: "transparent",
       stroke: "black",
       strokeWidth: 1,
@@ -71,40 +73,77 @@ const Customizer = ({ isFront, children = "" }) => {
       strokeDashArray: [5, 5],
     });
     canvas.renderAll();
+    window.boundary = boundary;
     canvas.add(boundary);
   };
 
-  const attachShirtBackground = (url) => {
+  const getCenterPositionOfObject = (object) => {
+    const canvas = fabricRef.current;
+    const svg = fabricRef.current._objects[0];
+    const placeholderBox = svg._objects.find(
+      (obj) => obj.id === "placeholder_front",
+    );
+
+    // Calculate the scale factor of the SVG
+    const scaleFactor = Math.min(
+      canvas.width / svg.width,
+      canvas.height / svg.height,
+    );
+    //Calculate the position and dimensions of the "object" box
+    const boxLeft = placeholderBox.left * scaleFactor + svg.left;
+    const boxTop = placeholderBox.top * scaleFactor + svg.top;
+    const boxWidth = placeholderBox.width * scaleFactor;
+    const boxHeight = placeholderBox.height * scaleFactor;
+
+    //Set the position of the object to be centered inside the "placeholder_front" box
+    const transformMatrix = placeholderBox.calcTransformMatrix();
+    const center = fabric.util.transformPoint(
+      { x: boxLeft + boxWidth / 2, y: boxTop + boxHeight / 2 },
+      transformMatrix,
+    );
+
+    console.log({
+      boxLeft,
+      boxTop,
+      boxWidth,
+      boxHeight,
+      center,
+    });
+
+    // const textLeft = center.x - boxWidth;
+    // const textTop = center.y - boxHeight;
+
+    const textLeft = center.x - object.width / 2;
+    const textTop = center.y - object.height / 2;
+    console.log({ top: textTop, left: textLeft });
+    return { top: textTop, left: textLeft };
+  };
+
+  const attachShirtBackground = () => {
     const canvas = fabricRef.current;
 
-    fabric.loadSVGFromURL("images/front.svg", function (objects, options) {
-      var svg = fabric.util.groupSVGElements(objects, options);
+    fabric.loadSVGFromURL("images/front2.svg", function (objects, options) {
+      const svg = fabric.util.groupSVGElements(objects, options);
 
-      // Calculate the center coordinates of the canvas
-      var centerX = canvas.getWidth() / 2;
-      var centerY = canvas.getHeight() / 2;
-
-      // Set the position of the SVG at the center of the canvas
-      svg.left = centerX - svg.width / 2;
-      svg.top = centerY - svg.height / 2;
-
+      // Step 1: Adjust the SVG size to fit the canvas
       const scaleFactor = Math.min(
-        canvas.getWidth() / svg.width,
-        canvas.getHeight() / svg.height,
+        canvas.width / svg.width,
+        canvas.height / svg.height,
       );
-
-      console.log(scaleFactor);
       svg.scale(scaleFactor);
 
-      svg.viewportHeight = canvas.getHeight();
-      svg.viewportWidth = canvas.getWidth();
+      // Step 2: Center the SVG on the canvas
+      svg.left = (canvas.width - svg.width * scaleFactor) / 2;
+      svg.top = (canvas.height - svg.height * scaleFactor) / 2;
+
+      // Step 3: Find the "placeholder_front" box within the SVG
+      boundingBoxGroup = svg._objects.find(
+        (obj) => obj.id === "placeholder_front",
+      );
+      window.boundingBoxGroup = boundingBoxGroup;
+
       svg.selectable = false;
-      svg.setCoords();
       svg.name = "product_image";
-
-      productSvg = svg;
-
-      // Add the SVG object to the canvas
       canvas.add(svg);
     });
 
@@ -114,33 +153,25 @@ const Customizer = ({ isFront, children = "" }) => {
   const addTextBox = () => {
     const canvas = fabricRef.current;
 
-    const centerPoint = boundary.getCenterPoint();
-
-    // Calculate the top and left coordinates from the center point
-    const topFromCenter = centerPoint.y;
-    const leftFromCenter = centerPoint.x;
-    const scaleX = boundary.scaleX || 1;
-    const scaleY = boundary.scaleY || 1;
-
-    console.log(topFromCenter, leftFromCenter);
-
-    var textbox = new fabric.Textbox("Enter Text", {
+    const textbox = new fabric.IText("Enter Text", {
+      uid: v4(),
       fontFamily: "open sans",
-      fontSize: 12,
+      fontSize: 16,
       name: "textbox",
-      // top: 200,
-      // left: 365,
-      top: topFromCenter,
-      left: leftFromCenter,
       originX: "center",
       originY: "center",
-      scaleX: scaleX,
-      scaleY: scaleY,
       onChange: function (e) {
         // This function defines the clipping region for the text box
         console.log("changed");
       },
     });
+
+    const { top, left } = getCenterPositionOfObject(textbox);
+
+    textbox.set({ left: left, top: top });
+
+    textbox.center();
+    textbox.bringForward();
     textbox.setControlsVisibility({
       mb: false,
       mt: false,
@@ -148,23 +179,19 @@ const Customizer = ({ isFront, children = "" }) => {
       ml: false,
     });
 
-    while (textbox.textLines.length > 1) {
-      textbox.set({ width: textbox.getScaledWidth() + 1 });
-    }
-
     textbox.on("modified", function () {
       // Perform any actions or log the event when the text box is moved
-      if (textbox.intersectsWithObject(boundary)) {
-        textbox.set("opacity", 1);
-      } else {
-        textbox.set("opacity", 0);
-      }
-      canvas.renderAll();
+      // if (textbox.intersectsWithObject(boundary)) {
+      // textbox.set("opacity", 1);
+      // } else {
+      // textbox.set("opacity", 0);
+      // }
+      // canvas.renderAll();
     });
     canvas.on("selection:created", function (event) {
       // Perform any actions or log the event when the text box is selected
       const selectedObject = event.selected;
-      console.log(selectedObject[0]);
+
       setActiveObject(selectedObject[0]);
 
       selectedObject[0].set({
@@ -206,8 +233,7 @@ const Customizer = ({ isFront, children = "" }) => {
 
   const changeBgColor = (hex) => {
     const canvas = fabricRef.current;
-    const pd = canvas._objects[1]; //will change index later
-    console.log(pd); //product image
+    const pd = canvas._objects[0]; //will change index later
     pd.getObjects().forEach(function (path) {
       if (path.fill !== "") {
         path.set({ fill: hex });
@@ -218,16 +244,23 @@ const Customizer = ({ isFront, children = "" }) => {
 
   const changeFont = (font) => {
     const canvas = fabricRef.current;
-    if (activeObject && activeObject.type === "textbox") {
+    if (activeObject && activeObject.type === "i-text") {
       activeObject.set("fontFamily", font);
-      console.log(activeObject);
+      canvas.renderAll();
+    }
+  };
+
+  const changeFontSize = (fontSize) => {
+    const canvas = fabricRef.current;
+    if (activeObject && activeObject.type === "i-text") {
+      activeObject.set("fontSize", fontSize);
       canvas.renderAll();
     }
   };
 
   const justifyText = (align) => {
     const canvas = fabricRef.current;
-    if (activeObject && activeObject.type === "textbox") {
+    if (activeObject && activeObject.type === "i-text") {
       activeObject.set("textAlign", align);
       canvas.renderAll();
     }
@@ -235,7 +268,7 @@ const Customizer = ({ isFront, children = "" }) => {
 
   const changeTextColor = (color) => {
     const canvas = fabricRef.current;
-    if (activeObject && activeObject.type === "textbox") {
+    if (activeObject && activeObject.type === "i-text") {
       activeObject.set("fill", color);
       canvas.renderAll();
     }
@@ -264,10 +297,8 @@ const Customizer = ({ isFront, children = "" }) => {
   };
 
   useEffect(() => {
-    const url = isFront ? "/images/front.png" : "/images/back.png";
     initFabric();
-    attachShirtBackground(url);
-    createBoundingBox();
+    attachShirtBackground();
   }, []);
 
   const handleFileChange = (event) => {
@@ -276,48 +307,45 @@ const Customizer = ({ isFront, children = "" }) => {
     reader.onload = function () {
       const base64ImageData = reader.result;
       if (typeof window !== undefined) attachImage(base64ImageData);
-      // eventBus.dispatch("addImage", { base64: base64ImageData });
     };
 
-    // Read the file as data URL (base64)
     reader.readAsDataURL(file);
   };
 
   useEffect(() => {
     const canvas = fabricRef.current;
     window.canvas = fabricRef.current;
-
-    //If text is moving and its outside the boundary, hide it
-    canvas.on("object:moving", function () {
-      elementsRefs.forEach(function (object) {
-        console.log("isTextbox", object.name);
-        if (object.name == "textbox") {
-          if (object.intersectsWithObject(boundary)) {
-            console.log("yes");
-            // object.set('opacity', 1)
-          } else {
-            console.log("no");
-            // object.set('opacity', 0)
-          }
-        }
-      });
-      // Render the canvas to update the visibility of the objects
-      // canvas.renderAll()
-    });
-
     canvas.on("object:selected", function () {
       const activeObj = o.target;
-      console.log("here", activeObj);
       activeObj.set({ borderColor: "#29ab51", cornerColor: "#29ab51" });
       canvas.renderAll();
     });
+
+    canvas.on("mouse:wheel", function (opt) {
+      var delta = opt.e.deltaY;
+      var zoom = canvas.getZoom();
+      zoom *= 0.999 ** delta;
+      if (zoom > 20) zoom = 20;
+      if (zoom < 0.01) zoom = 0.01;
+      canvas.setZoom(zoom);
+      opt.e.preventDefault();
+      opt.e.stopPropagation();
+      canvas.renderAll();
+    });
   }, []);
+
+  const setObjectToActive = (element) => {
+    const canvas = fabricRef.current;
+    canvas.setActiveObject(element);
+    setActiveObject(element);
+  };
 
   return (
     <>
       <div className="grid  grid-flow-row grid-cols-[1.3fr_0.6fr] grid-rows-[0.2fr] bg-white text-black">
         <div className="relative flex items-center">
           <canvas ref={canvasRef} />
+
           {/* Toolbar */}
           <div
             className="absolute"
@@ -325,157 +353,27 @@ const Customizer = ({ isFront, children = "" }) => {
             ref={toolbarRef}
           >
             {showToolbar && (
-              <div className="ml-auto flex justify-center gap-[10px] rounded border-gray-100 bg-gray-200 px-2 py-2  text-black">
-                <div className="font-picker max-w-[200px]">
-                  <FontPicker
-                    defaultValue={activeFont}
-                    className="h-full border  bg-gray-50 text-sm text-gray-900 "
-                    // apiKey={API_KEY}
-                    value={(nextFont) => {
-                      // console.log(nextFont), changeFont(nextFont);
-                    }}
-                  />
-                </div>
-                <div>
-                  <input
-                    className="h-full w-[60px] border border-gray-300 bg-gray-50 pl-2"
-                    type="number"
-                    defaultValue={12}
-                  />
-                </div>
-
-                <button
-                  onClick={() => justifyText("left")}
-                  className="bg-white p-2"
-                >
-                  <BsJustifyLeft />
-                </button>
-                <button
-                  onClick={() => justifyText("justify")}
-                  className="bg-white p-2"
-                >
-                  <BsJustify />
-                </button>
-                <button
-                  onClick={() => justifyText("center")}
-                  className="bg-white p-2"
-                >
-                  <BiAlignMiddle />
-                </button>
-                <button
-                  onClick={() => justifyText("right")}
-                  className="bg-white p-2"
-                >
-                  <BsJustifyRight />
-                </button>
-                <div className="relative bg-white p-2">
-                  <button onClick={() => setShowColorPicker(!showColorPicker)}>
-                    <AiOutlineFontColors />
-                  </button>
-                  {showColorPicker && (
-                    <div className="absolute left-1.5 top-[50px] z-10 border border-solid border-gray-200 bg-white p-2.5">
-                      <CirclePicker
-                        onChangeComplete={(color) => changeTextColor(color.hex)}
-                      />
-                    </div>
-                  )}
-                </div>
-                <button className="bg-white p-2">
-                  <BsTrash />
-                </button>
-              </div>
+              <Toolbar
+                changeFont={(value) => changeFont(value)}
+                changeFontSize={(value) => changeFontSize(value)}
+                justifyText={(value) => justifyText(value)}
+                changeTextColor={(value) => changeTextColor(value)}
+              />
             )}
           </div>
+
         </div>
         <div className="overflow-y-auto border border-t-0 border-gray-300 p-3">
           {/* Add Items area */}
           {!showCustomizer && (
-            <>
-              <div className="flex gap-2">
-                <button className="font-light text-green-500 underline underline-offset-8">
-                  New design
-                </button>
-                <button className="font-light  hover:text-green-500 hover:underline-offset-8">
-                  My library
-                </button>
-                <button className="font-light  hover:text-green-500 hover:underline-offset-8">
-                  My templates
-                </button>
-                <button className="font-light  hover:text-green-500 hover:underline-offset-8">
-                  Graphics
-                </button>
-              </div>
-              <div className="flex flex-col">
-                <p className="mt-4 font-medium">Add design from...</p>
-                <div className="mt-3 flex flex-col gap-2">
-                  <div
-                    onClick={() => {
-                      fileInput.current.click();
-                    }}
-                    className="text-light flex cursor-pointer items-center gap-6 border border-gray-300 p-5 hover:bg-gray-200"
-                  >
-                    <BsLaptop className="text-3xl" /> My device
-                    <input
-                      className="hidden"
-                      onChange={handleFileChange}
-                      type="file"
-                      ref={fileInput}
-                    />
-                  </div>
-                  <div
-                    onClick={() => {
-                      setShowCustomizer(true), addTextBox();
-                    }}
-                    className="flex cursor-pointer items-center gap-6 border border-gray-300 p-5 hover:bg-gray-200"
-                  >
-                    <GoTypography className="text-3xl" /> Custom Text
-                  </div>
-
-                  <div className="flex cursor-pointer items-center gap-6 border border-gray-300 p-5 hover:bg-gray-200">
-                    <SiShutterstock className="bg-red-500 p-[2px] text-3xl text-white" />
-                    <div className="items-left flex flex-col ">
-                      <p>Shutterstock</p>
-                      <p className="text-sm text-gray-700">
-                        Add images for free and pay only after you sell
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex cursor-pointer items-center gap-6 border border-gray-300 p-5 hover:bg-gray-200">
-                    <AiOutlineDropbox className="text-3xl text-blue-500" />{" "}
-                    Dropbox
-                  </div>
-                  <div className="flex cursor-pointer items-center gap-6 border border-gray-300 p-5 hover:bg-gray-200">
-                    <img src="/images/gdrive.svg"></img> Google Drive
-                  </div>
-                  <div className="flex cursor-pointer items-center gap-6 border border-gray-300 p-5 hover:bg-gray-200">
-                    <img src="/images/fiverr.svg" />
-                    <div className="items-left flex flex-col ">
-                      <p>Fiverr</p>
-                      <p className="text-sm text-gray-700">
-                        Hire professional designers on fiverr
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-3 bg-gray-200 p-3">
-                  <p className="text-medium">Print file requirements</p>
-                  <ul className="ml-3 mt-1 list-disc">
-                    <li className="text-light text-sm">
-                      JPG, PNG and SVG file types supported
-                    </li>
-                    <li className="text-light text-sm">
-                      Maximum 105 MB (JPG, PNG) or 21 MB (SVG)
-                    </li>
-                    <li className="text-light text-sm">
-                      Print area size 3600 × 4800 px (300 DPI)
-                    </li>
-                    <li className="text-light text-sm">
-                      Maximum resolution 30000 x 30000 px
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </>
+            <div>
+              <DesignTabs />
+              <DesignPicker
+                handleFileChange={handleFileChange}
+                setShowCustomizer={setShowCustomizer}
+                addTextBox={addTextBox}
+              />
+            </div>
           )}
 
           {/* Customize items area */}
@@ -517,9 +415,21 @@ const Customizer = ({ isFront, children = "" }) => {
                   key={`layer_${index}`}
                   className="mb-2 border border-gray-400"
                 >
-                  <div className="border-solid; flex items-center justify-between gap-3 border-b border-b-[#ccc] p-3">
+                  <div
+                    onClick={() => setObjectToActive(element)}
+                    className="flex cursor-pointer items-center justify-between gap-3 border-b border-solid border-b-[#ccc] p-3"
+                  >
                     <div className="mr-3">
-                      { element.name == 'design' ? <img src={ element.toDataURL({format: 'jpeg', quality: 1 }) } /> : <GoTypography className="text-3xl" /> }
+                      {element.name == "design" ? (
+                        <img
+                          src={element.toDataURL({
+                            format: "jpeg",
+                            quality: 1,
+                          })}
+                        />
+                      ) : (
+                        <GoTypography className="text-3xl" />
+                      )}
                     </div>
                     <div className="items-left flex flex-1 flex-col">
                       {element.name === "design" ? (
@@ -533,7 +443,7 @@ const Customizer = ({ isFront, children = "" }) => {
                         <>
                           <p>{element.text || "Enter text"}</p>
                           <p className="text-sm text-gray-700">
-                            {element.fontFamily || "Roboto"}
+                            {element.fontFamily || "Helvetica"}
                           </p>
                         </>
                       )}
@@ -545,61 +455,74 @@ const Customizer = ({ isFront, children = "" }) => {
                       <BsFillTrashFill />
                     </div>
                   </div>
-
-                  <div className="p-3 ">
-                    <label className="mb-1 block font-light">Rotate</label>
-                    <input
-                      type="text"
-                      className="h-[40px] w-full border border-gray-300 pl-3"
-                      defaultValue={0}
-                    />
-                  </div>
-
-                  <div className="flex gap-3 p-3">
-                    <div className="">
-                      <label className="mb-1 block font-light">
-                        Position Left %
-                      </label>
-                      <input
-                        type="text"
-                        className="h-[40px] w-full border border-gray-300 pl-3"
-                        defaultValue={0}
-                      />
-
-                      <div className="mt-3 flex justify-evenly">
-                        <button className="flex-1 border border-gray-300 p-3 hover:text-green-500">
-                          <MdOutlineVerticalAlignBottom className="rotate-90" />
-                        </button>
-                        <button className="flex-1 border border-gray-300 p-3 hover:text-green-500">
-                          <MdVerticalAlignCenter className="rotate-90" />
-                        </button>
-                        <button className="flex-1 border border-gray-300 p-3 hover:text-green-500">
-                          <MdOutlineVerticalAlignBottom className="-rotate-90" />
-                        </button>
+                  {activeObject?.uid == element?.uid && (
+                    <>
+                      <div className="p-3 ">
+                        <label className="mb-1 block font-light">Rotate</label>
+                        <input
+                          type="number"
+                          className="h-[40px] w-full border border-gray-300 pl-3"
+                          defaultValue={0}
+                        />
                       </div>
-                    </div>
-                    <div className="">
-                      <label className="mb-1 block font-light">
-                        Position Right %
-                      </label>
-                      <input
-                        type="text"
-                        className="h-[40px] w-full border border-gray-300 pl-3"
-                        defaultValue={0}
-                      />
-                      <div className="mt-3 flex justify-evenly">
-                        <button className="flex-1 border border-gray-300 p-3 hover:text-green-500">
-                          <MdOutlineVerticalAlignBottom className="rotate-180" />
-                        </button>
-                        <button className="flex-1 border border-gray-300 p-3 hover:text-green-500">
-                          <MdVerticalAlignCenter className="" />
-                        </button>
-                        <button className="flex-1 border border-gray-300 p-3 hover:text-green-500">
-                          <MdOutlineVerticalAlignBottom className="" />
-                        </button>
+
+                      <div className="flex gap-3 p-3">
+                        <div className="">
+                          <label className="mb-1 block font-light">
+                            Position Left %
+                          </label>
+                          <input
+                            type="number"
+                            min={boundary?.left}
+                            onChange={(e) => {
+                              element.set("left", e.target.value),
+                                canvasRef?.current?.renderAll();
+                            }}
+                            className="h-[40px] w-full border border-gray-300 pl-3"
+                            defaultValue={element.left}
+                          />
+
+                          <div className="mt-3 flex justify-evenly">
+                            <button className="flex-1 border border-gray-300 p-3 hover:text-green-500">
+                              <MdOutlineVerticalAlignBottom className="rotate-90" />
+                            </button>
+                            <button className="flex-1 border border-gray-300 p-3 hover:text-green-500">
+                              <MdVerticalAlignCenter className="rotate-90" />
+                            </button>
+                            <button className="flex-1 border border-gray-300 p-3 hover:text-green-500">
+                              <MdOutlineVerticalAlignBottom className="-rotate-90" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="">
+                          <label className="mb-1 block font-light">
+                            Position Top %
+                          </label>
+                          <input
+                            type="number"
+                            min={boundary?.top}
+                            onChange={(e) => {
+                              element.set("left", e.target.value),
+                                canvasRef?.current?.renderAll();
+                            }}
+                            className="h-[40px] w-full border border-gray-300 pl-3"
+                            defaultValue={element.top}
+                          />
+                          <div className="mt-3 flex justify-evenly">
+                            <button className="flex-1 border border-gray-300 p-3 hover:text-green-500">
+                              <MdOutlineVerticalAlignBottom className="rotate-180" />
+                            </button>
+                            <button className="flex-1 border border-gray-300 p-3 hover:text-green-500">
+                              <MdVerticalAlignCenter className="" />
+                            </button>
+                            <button className="flex-1 border border-gray-300 p-3 hover:text-green-500">
+                              <MdOutlineVerticalAlignBottom className="" />
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    </>
+                  )}
                 </div>
               ))}
 

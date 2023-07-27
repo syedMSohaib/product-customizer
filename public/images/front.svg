@@ -10,7 +10,7 @@
 			</g>
 			<g>
 			</g>
-			<g transform="matrix(1 0 0 1 976.76 744.25)">
+			<g id="bounding-box" transform="matrix(1 0 0 1 976.76 744.25)">
 				<g transform="matrix(1 0 0 1 0 0)">
 					<g>
                         <path transform="matrix(1 0 0 1 0 0)"  d="M0 0L1151.71 0L1151.71 1535.62L0 1535.62z" stroke="#FFFFFF" stroke-width="1" fill="#FFFFFF" fill-rule="nonzero" />
