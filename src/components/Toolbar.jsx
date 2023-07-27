@@ -1,10 +1,11 @@
-import React from "react";
-import { CirclePicker } from "react-color";
+import React, { useState } from "react";
+import { TwitterPicker } from "react-color";
 import { AiOutlineFontColors } from "react-icons/ai";
-import { BsTrash } from "react-icons/bs";
+import { BiAlignMiddle } from "react-icons/bi";
+import { BsJustify, BsJustifyLeft, BsJustifyRight, BsTrash } from "react-icons/bs";
 
 export const Toolbar = ({ changeFont, changeFontSize, justifyText, changeTextColor }) => {
-  const [showColorPicker, setShowColorPicker] = useState(true);
+  const [showColorPicker, setShowColorPicker] = useState(false);
   return (
     <div className="ml-auto flex justify-center gap-[10px] rounded border-gray-100 bg-gray-200 px-2 py-2  text-black">
       <div className="font-picker max-w-[200px]">
@@ -59,7 +60,7 @@ export const Toolbar = ({ changeFont, changeFontSize, justifyText, changeTextCol
         </button>
         {showColorPicker && (
           <div className="absolute left-1.5 top-[50px] z-10 border border-solid border-gray-200 bg-white p-2.5">
-            <CirclePicker
+            <TwitterPicker
               onChangeComplete={(color) => changeTextColor(color.hex)}
             />
           </div>

@@ -2,7 +2,7 @@
 
 import { fabric } from "fabric";
 import { useEffect, useRef, useState } from "react";
-import { CirclePicker } from "react-color";
+import { TwitterPicker } from "react-color";
 import {
   BsFillTrashFill
 } from "react-icons/bs";
@@ -16,6 +16,7 @@ import { v4 } from "uuid";
 import { AddDesign } from "./AddDesign";
 import { DesignTabs } from "./DesignTabs";
 import { Toolbar } from "./Toolbar";
+import { DesignPicker } from "./DesignPicker";
 
 const WIDTH = 900;
 const HEIGHT = 600;
@@ -370,7 +371,7 @@ const Customizer = ({ isFront, children = "" }) => {
                     positions={["bottom", "left"]}
                     content={
                       <div className="z-10 border border-solid border-gray-200 bg-white p-2.5">
-                        <CirclePicker
+                        <TwitterPicker
                           onChangeComplete={(color) => changeBgColor(color.hex)}
                         />
                       </div>
