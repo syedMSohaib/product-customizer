@@ -1,32 +1,19 @@
 "use client";
 
 import { fabric } from "fabric";
-import { v4 } from "uuid";
-import FontPicker from "react-fontpicker-ts";
 import { useEffect, useRef, useState } from "react";
 import { CirclePicker } from "react-color";
 import {
-  AiOutlineDropbox,
-  AiOutlineFontColors,
-  AiOutlinePlus,
-} from "react-icons/ai";
-import { BiAlignMiddle } from "react-icons/bi";
-import {
-  BsFillTrashFill,
-  BsJustify,
-  BsJustifyLeft,
-  BsJustifyRight,
-  BsLaptop,
-  BsTrash,
+  BsFillTrashFill
 } from "react-icons/bs";
+import { GoTypography } from "react-icons/go";
 import {
   MdOutlineVerticalAlignBottom,
   MdVerticalAlignCenter,
 } from "react-icons/md";
-import { GoTypography } from "react-icons/go";
-import { SiShutterstock } from "react-icons/si";
 import { Popover } from "react-tiny-popover";
-import { PrintInfo } from "./PrintInfo";
+import { v4 } from "uuid";
+import { AddDesign } from "./AddDesign";
 import { DesignTabs } from "./DesignTabs";
 import { Toolbar } from "./Toolbar";
 
@@ -39,17 +26,14 @@ const Customizer = ({ isFront, children = "" }) => {
   const fabricRef = useRef(null);
   const canvasRef = useRef(null);
   const toolbarRef = useRef(null);
-  const fileInput = useRef(null);
   const [elementsRefs, setElementsRef] = useState([]);
   const [showToolbar, setShowToolbar] = useState(false);
   const [activeObject, setActiveObject] = useState(null);
-  const [showColorPicker, setShowColorPicker] = useState(false);
   const [activeFont, setActiveFont] = useState("open sans");
   const [isTextColorPicker, setIsTextColorPicker] = useState(false);
   const [showCustomizer, setShowCustomizer] = useState(false);
 
   let boundary;
-  let productSvg;
   let boundingBoxGroup;
 
   const initFabric = () => {
@@ -361,7 +345,6 @@ const Customizer = ({ isFront, children = "" }) => {
               />
             )}
           </div>
-
         </div>
         <div className="overflow-y-auto border border-t-0 border-gray-300 p-3">
           {/* Add Items area */}
@@ -526,18 +509,7 @@ const Customizer = ({ isFront, children = "" }) => {
                 </div>
               ))}
 
-              <div
-                onClick={() => setShowCustomizer(false)}
-                className="my-4 flex cursor-pointer items-center gap-6 border border-dashed border-gray-300 p-5 hover:text-green-500"
-              >
-                <AiOutlinePlus className="p-[2px] text-3xl" />
-                <div className="items-left flex flex-col ">
-                  <p>Add Design</p>
-                  <p className="text-sm text-gray-700">
-                    Print area size 3600 x 4800 px (300 dpi)
-                  </p>
-                </div>
-              </div>
+              <AddDesign setShowCustomizer={setShowCustomizer} />
 
               <button className="my-4 h-[40px] bg-green-500 text-center text-white">
                 Save Product
