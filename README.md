@@ -1,4 +1,4 @@
-Product Customizer (or to precise T-Shirt Customizer), aims to mimic product designer capabilities like printify
+Product Customizer (or to precise T-Shirt Customizer), aims to mimic product designer capabilities like printify.
 
 Reference: https://printify.com/app/editor/6/27
 
